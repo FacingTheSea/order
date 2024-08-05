@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>奶茶下单页面</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        form {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            max-width: 500px;
+            margin: auto;
+        }
+        label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #555;
+        }
+        select, input[type="text"], button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        .options {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .options label {
+            position: relative;
+            padding-left: 35px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .options input[type="radio"] {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+        }
+        .options input[type="radio"] + label:before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid #ccc;
+            background-color: #fff;
+        }
+        .options input[type="radio"]:checked + label:before {
+            background-color: #4caf50;
+            border-color: #4caf50;
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3csvg xmlns%3d%27http%3a//www.w3.org/2000/svg%27 viewBox%3d%270 0 24 24%27 fill%3d%27none%27 stroke%3d%27%23fff%27 stroke-width%3d%272%27 stroke-linecap%3d%27round%27 stroke-linejoin%3d%27round%27 class%3d%27feather feather-check%27%3e%3cpolyline points%3d%279 11 12 14 22 4%27%3e%3c/polyline%3e');
+            background-size: 14px 14px;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+    </style>
+</head>
+<body>
+    <h1>下单奶茶</h1>
+    <form id="orderForm">
+        <label for="tea-name">奶茶名称:</label>
+        <select id="tea-name" name="tea-name" required>
+            <option value="original">原味奶茶</option>
+            <option value="pearl">珍珠奶茶</option>
+            <option value="matcha">抹茶奶茶</option>
+            <option value="fruit">水果奶茶</option>
+        </select><br><br>
+
+        <label for="shop-select">附近店名称:</label>
+        <select id="shop-select" name="shop-id" required>
+            <!-- Options will be populated by JavaScript -->
+        </select><br><br>
+
+        <label>温度:</label>
+        <div class="options">
+            <input type="radio" id="hot" name="temperature" value="hot" required>
+            <label for="hot">热</label>
+            <input type="radio" id="warm" name="temperature" value="warm">
+            <label for="warm">温</label>
+            <input type="radio" id="cold" name="temperature" value="cold">
+            <label for="cold">冷</label>
+        </div><br>
+
+        <label>糖度:</label>
+        <div class="options">
+            <input type="radio" id="full-sugar" name="sugar" value="full" required>
+            <label for="full-sugar">全糖</label>
+            <input type="radio" id="half-sugar" name="sugar" value="half">
+            <label for="half-sugar">半糖</label>
+            <input type="radio" id="less-sugar" name="sugar" value="less">
+            <label for="less-sugar">少糖</label>
+            <input type="radio" id="no-sugar" name="sugar" value="none">
+            <label for="no-sugar">无糖</label>
+        </div><br>
+
+        <label for="location">当前位置:</label>
+        <input type="text" id="location" name="location" readonly><br>
+        <button type="button" onclick="getLocation()">获取当前位置</button><br><br>
+
+        <button type="submit">下单</button>
+    </form>
+
+    <script>
+        window.onload = function() {
+            fetch('http://124.222.33.61:3333/qjk', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ location: 'current' }) // Replace with actual location if needed
+            })
+            .then(response => response.json())
+            .then(data => {
+                const selectElement = document.getElementById("shop-select");
+                data.forEach(shop => {
+                    const option = document.createElement("option");
+                    option.value = shop.shopId;
+                    option.text = shop.shopName;
+                    selectElement.appendChild(option);
+                });
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+            });
+        };
+
+        document.getElementById('orderForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const teaName = document.getElementById('tea-name').value;
+            const shopId = document.getElementById('shop-select').value;
+            const temperature = document.querySelector('input[name="temperature"]:checked').value;
+            const sugar = document.querySelector('input[name="sugar"]:checked').value;
+            const location = document.getElementById('location').value;
+            
+            const orderData = {
+                teaName: teaName,
+                shopId: shopId,
+                temperature: temperature,
+                sugar: sugar,
+                location: location
+            };
+
+            fetch('https://example.com/api/order', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(orderData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success:', data);
+                alert('订单成功提交！');
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                alert('订单提交失败，请重试。');
+            });
+        });
+
+        function getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(showPosition, showError);
+            } else { 
+                alert("浏览器不支持地理位置定位。");
+            }
+        }
+
+        function showPosition(position) {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            const coords = `纬度: ${latitude}, 经度: ${longitude}`;
+            document.getElementById('location').value = coords;
+
+            const locationData = {
+                location: coords
+            };
+
+            fetch('http://124.222.33.61:3333/qjk', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(locationData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Location sent successfully:', data);
+            })
+            .catch((error) => {
+                console.error('Error sending location:', error);
+            });
+        }
+
+        function showError(error) {
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    alert("用户拒绝了请求地理定位。请在浏览器设置中启用地理位置访问权限。");
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    alert("位置信息不可用。");
+                    break;
+                case error.TIMEOUT:
+                    alert("请求用户地理定位超时。");
+                    break;
+                case error.UNKNOWN_ERROR:
+                    alert("发生未知错误。");
+                    break;
+            }
+        }
+    </script>
+</body>
+</html>
